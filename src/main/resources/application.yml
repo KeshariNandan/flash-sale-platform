@@ -19,8 +19,14 @@ spring:
     listener:
       ack-mode: manual_immediate
 
+  docker:
+    compose:
+      lifecycle-management: start_only
+      file: compose.yaml
+
 server:
-  port: 8080
+  # 8085 keeps clear of a locally installed Pulsar admin on 8080.
+  port: 8085
   shutdown: graceful
 
 management:
