@@ -1,6 +1,13 @@
+flashsale:
+  # Admission strategy: "sql" (baseline, benchmark reference) or "redis" (optimised).
+  gate: sql
+
 spring:
   application:
     name: flash-sale-platform
+  threads:
+    virtual:
+      enabled: true
 
   jpa:
     open-in-view: false
