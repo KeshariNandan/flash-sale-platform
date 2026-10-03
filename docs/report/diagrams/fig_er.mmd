@@ -1,0 +1,63 @@
+erDiagram
+  APP_USER {
+    varchar user_id PK
+    varchar email
+    varchar saved_payment_token
+    timestamptz created_at
+  }
+  FLASH_SALE {
+    uuid id PK
+    varchar sku
+    varchar name
+    numeric unit_price
+    timestamptz start_at
+    timestamptz end_at
+    int initial_stock
+    int per_user_limit
+    int hold_ttl_seconds
+    varchar status
+    timestamptz created_at
+  }
+  INVENTORY {
+    uuid sale_id PK, FK
+    int stock_remaining
+    bigint version
+    timestamptz updated_at
+  }
+  RESERVATION {
+    uuid id PK
+    uuid sale_id FK
+    varchar user_id FK
+    varchar idempotency_key UK
+    varchar status
+    timestamptz expires_at
+    timestamptz created_at
+    timestamptz updated_at
+  }
+  CUSTOMER_ORDER {
+    uuid id PK
+    uuid reservation_id FK, UK
+    uuid sale_id FK
+    varchar user_id FK
+    numeric amount
+    varchar payment_ref
+    varchar status
+    timestamptz created_at
+  }
+  OUTBOX_EVENT {
+    bigint id PK
+    varchar aggregate_type
+    uuid aggregate_id
+    varchar event_type
+    jsonb payload
+    timestamptz created_at
+    timestamptz published_at
+  }
+
+  FLASH_SALE ||--|| INVENTORY : "has stock"
+  FLASH_SALE ||--o{ RESERVATION : "receives"
+  APP_USER ||--o{ RESERVATION : "places"
+  RESERVATION ||--o| CUSTOMER_ORDER : "fulfilled by"
+  FLASH_SALE ||--o{ CUSTOMER_ORDER : "sells"
+  APP_USER ||--o{ CUSTOMER_ORDER : "owns"
+  RESERVATION ||--|| OUTBOX_EVENT : "emits"

@@ -1,0 +1,11 @@
+flowchart LR
+  req[Requirements and invariants] --> lld[Low level design: classes and schema]
+  lld --> base[Baseline: SQL only claim path]
+  base --> bench1[Benchmark 1: 1M attempts]
+  bench1 --> opt[Optimised: Redis gate + outbox + Kafka worker]
+  opt --> recon[Reconciler and failure handling]
+  recon --> bench2[Benchmark 2: 1M attempts]
+  bench2 --> deploy[AWS deployment design]
+  deploy --> report[Report and submission]
+  bench1 -. numbers .-> report
+  bench2 -. numbers .-> report

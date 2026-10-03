@@ -1,0 +1,39 @@
+flowchart TB
+  users[Buyers - Internet] --> r53[Route 53 DNS]
+  r53 --> alb
+
+  subgraph vpc [VPC 10.0.0.0/16 - ap-south-1]
+    subgraph pub [Public subnets 10.0.1.0/24 and 10.0.2.0/24 - two AZs]
+      alb[Application Load Balancer\nSG: alb-sg allows 443 from 0.0.0.0/0]
+      nat[NAT Gateway]
+    end
+
+    subgraph app [Private app subnets 10.0.11.0/24 and 10.0.12.0/24]
+      ebApi[Elastic Beanstalk env: flash-sale-api\nEC2 Auto Scaling group, Corretto 25\nSG: app-sg allows 8085 from alb-sg]
+      ebWorker[Elastic Beanstalk worker env: flash-sale-worker\nEC2 Auto Scaling group\nSG: app-sg]
+    end
+
+    subgraph datatier [Private data subnets 10.0.21.0/24 and 10.0.22.0/24]
+      rds[(Amazon RDS PostgreSQL 16\nMulti-AZ\nSG: rds-sg allows 5432 from app-sg)]
+      cache[(Amazon ElastiCache for Redis 7\nprimary + replica\nSG: cache-sg allows 6379 from app-sg)]
+      msk[[Amazon MSK - Kafka\n2 brokers across AZs\nSG: msk-sg allows 9092 from app-sg]]
+    end
+  end
+
+  alb --> ebApi
+  ebApi --> rds
+  ebApi --> cache
+  ebWorker --> rds
+  ebWorker --> cache
+  ebApi --> msk
+  ebWorker --> msk
+  ebApi --> nat
+  ebWorker --> nat
+  nat --> internet[Internet - package updates, payment gateway]
+
+  sm[AWS Secrets Manager\nDB and JWT secrets] -.-> ebApi
+  sm -.-> ebWorker
+  cw[CloudWatch Logs and Metrics] -.-> ebApi
+  cw -.-> ebWorker
+  ecr[ECR / S3 application bundle] -.-> ebApi
+  ecr -.-> ebWorker

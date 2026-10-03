@@ -1,0 +1,31 @@
+flowchart LR
+  relay[Outbox relay\nproducer, acks=all, idempotent] --> t
+
+  subgraph t [Topic sale.reservations - 6 partitions, RF 2]
+    p0[partition 0]
+    p1[partition 1]
+    p2[partition 2]
+    p3[partition 3]
+    p4[partition 4]
+    p5[partition 5]
+  end
+
+  subgraph cg [Consumer group flash-sale-order-worker]
+    c0[worker thread A]
+    c1[worker thread B]
+    c2[worker thread C]
+  end
+
+  p0 --> c0
+  p1 --> c0
+  p2 --> c1
+  p3 --> c1
+  p4 --> c2
+  p5 --> c2
+
+  c0 --> pg[(PostgreSQL\nidempotent insert)]
+  c1 --> pg
+  c2 --> pg
+  c0 -.->|after retries| dlt[[sale.reservations.DLT]]
+  c1 -.-> dlt
+  c2 -.-> dlt

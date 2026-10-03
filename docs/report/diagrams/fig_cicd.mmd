@@ -1,0 +1,10 @@
+flowchart LR
+  dev[Developer commit / PR] --> gh[GitHub Actions]
+  gh --> build[./mvnw verify\nunit + Testcontainers integration tests]
+  build --> jar[Package executable JAR\nSpring Boot Maven plugin]
+  jar --> s3[Upload application version bundle to S3]
+  s3 --> ebDeploy[Elastic Beanstalk deploy\nrolling with additional batch]
+  ebDeploy --> health[Health check /actuator/health\nvia ALB]
+  health -->|healthy| done[Traffic shifted to new instances]
+  health -->|unhealthy| rollback[Automatic rollback to previous version]
+  flyway[Flyway migrations run at app start\nbackward compatible only] -.-> ebDeploy

@@ -1,0 +1,14 @@
+sequenceDiagram
+  participant A as Request A (user 41)
+  participant B as Request B (user 77)
+  participant R as Redis single command thread
+  Note over R: stock:sale-1 = 1
+
+  A->>R: EVALSHA reserve.lua (user 41)
+  B->>R: EVALSHA reserve.lua (user 77)
+  Note over R: scripts are queued and run one at a time
+  R->>R: A: GET stock = 1, not in buyers set -> DECR -> 0, SADD user 41, SET hold TTL 120s
+  R-->>A: 1 (accepted)
+  R->>R: B: GET stock = 0 -> return -1
+  R-->>B: -1 (sold out)
+  Note over A,B: exactly one unit sold, no lock held by the application

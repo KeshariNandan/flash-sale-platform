@@ -1,0 +1,103 @@
+classDiagram
+  direction TB
+
+  class ClaimController {
+    +claim(saleId, ClaimRequest, idempotencyKey, principal) ResponseEntity
+    +reservation(id) ReservationResponse
+  }
+  class SaleAdminController {
+    +create(CreateSaleRequest) SaleResponse
+    +open(saleId)
+    +close(saleId)
+    +stats(saleId) SaleStatsResponse
+  }
+  class ApiExceptionHandler {
+    +handle(DomainException) ProblemDetail
+  }
+
+  class ClaimService {
+    <<application>>
+    -StockGate gate
+    -ReservationRepository reservations
+    -OutboxRepository outbox
+    +claim(ClaimCommand) ClaimResult
+  }
+  class SaleService {
+    <<application>>
+    +create(CreateSaleCommand) FlashSale
+    +open(UUID)
+    +close(UUID)
+  }
+  class ReconciliationService {
+    <<application>>
+    +expireStaleHolds()
+    +invariantReport(UUID) InvariantReport
+  }
+  class OrderWorker {
+    <<application>>
+    -PaymentGateway payments
+    +onReservationAccepted(event, ack)
+  }
+
+  class StockGate {
+    <<interface>>
+    +tryReserve(saleId, userId, key, ttl) GateResult
+    +release(saleId, userId, key)
+    +warm(saleId, stock)
+    +remaining(saleId) int
+  }
+  class RedisStockGate {
+    -RedisScript reserveScript
+    -RedisScript releaseScript
+  }
+  class SqlStockGate {
+    <<baseline for benchmark>>
+    -JdbcTemplate jdbc
+  }
+
+  class PaymentGateway {
+    <<interface>>
+    +charge(userId, amount, reference) PaymentResult
+  }
+  class SimulatedPaymentGateway {
+    -double failureRate
+    -Duration latency
+  }
+
+  class OutboxRelay {
+    +publishBatch()
+  }
+  class ReservationEventPublisher {
+    <<interface>>
+    +publish(ReservationAccepted)
+  }
+  class KafkaReservationEventPublisher
+
+  class ReservationRepository {
+    <<interface>>
+  }
+  class OrderRepository {
+    <<interface>>
+  }
+  class OutboxRepository {
+    <<interface>>
+    +lockUnpublished(limit) List
+  }
+
+  ClaimController --> ClaimService
+  SaleAdminController --> SaleService
+  SaleAdminController --> ReconciliationService
+  ClaimService --> StockGate
+  ClaimService --> ReservationRepository
+  ClaimService --> OutboxRepository
+  StockGate <|.. RedisStockGate
+  StockGate <|.. SqlStockGate
+  OutboxRelay --> OutboxRepository
+  OutboxRelay --> ReservationEventPublisher
+  ReservationEventPublisher <|.. KafkaReservationEventPublisher
+  OrderWorker --> PaymentGateway
+  OrderWorker --> ReservationRepository
+  OrderWorker --> OrderRepository
+  PaymentGateway <|.. SimulatedPaymentGateway
+  ReconciliationService --> StockGate
+  ReconciliationService --> ReservationRepository

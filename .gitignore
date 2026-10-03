@@ -31,3 +31,10 @@ build/
 
 ### VS Code ###
 .vscode/
+
+### macOS
+.DS_Store
+
+### Report tooling (generated .docx/.pdf are build outputs, submitted via the portal)
+.venv/
+docs/report/out/

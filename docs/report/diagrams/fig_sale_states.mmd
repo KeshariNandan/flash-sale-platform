@@ -1,0 +1,23 @@
+stateDiagram-v2
+  direction TB
+  state "Sale lifecycle" as Sale {
+    direction LR
+    [*] --> SCHEDULED : create sale
+    SCHEDULED --> OPEN : start time / admin opens (pre-warm Redis stock)
+    OPEN --> SOLD_OUT : redis stock reaches 0
+    OPEN --> CLOSED : end time / admin closes
+    SOLD_OUT --> OPEN : expired holds return units
+    SOLD_OUT --> CLOSED : end time reached
+    CLOSED --> [*]
+  }
+  state "Reservation lifecycle" as Res {
+    direction LR
+    [*] --> PENDING : Lua gate accepted
+    PENDING --> CONFIRMED : payment ok, order created
+    PENDING --> RELEASED : payment failed
+    PENDING --> EXPIRED : hold TTL elapsed
+    CONFIRMED --> [*]
+    RELEASED --> [*]
+    EXPIRED --> [*]
+  }
+  Sale --> Res : each accepted claim

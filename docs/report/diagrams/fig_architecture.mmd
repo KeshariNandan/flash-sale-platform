@@ -1,0 +1,35 @@
+flowchart LR
+  subgraph clients [Clients]
+    buyer[Buyer app / k6 load generator]
+    admin[Sale administrator]
+  end
+
+  subgraph api [Spring Boot API]
+    gw[Rate limiter and JWT filter]
+    ctrl[ClaimController]
+    svc[ClaimService]
+    outboxRelay[Outbox relay - scheduled]
+  end
+
+  subgraph data [Data tier]
+    redis[(Redis: stock counter, holds, idempotency)]
+    pg[(PostgreSQL: sales, reservations, orders, outbox)]
+    kafka[[Kafka topic: sale.reservations]]
+  end
+
+  subgraph worker [Order worker]
+    consumer[Kafka consumer group]
+    pay[Payment gateway adapter]
+    recon[Hold reconciler - scheduled]
+  end
+
+  buyer -->|POST /claims| gw --> ctrl --> svc
+  admin -->|POST /sales| ctrl
+  svc -->|Lua: check + decrement + hold| redis
+  svc -->|reservation + outbox row in one tx| pg
+  outboxRelay -->|poll SKIP LOCKED| pg
+  outboxRelay -->|publish| kafka
+  kafka --> consumer --> pay
+  consumer -->|confirm reservation, insert order| pg
+  recon -->|expire holds, return units| redis
+  recon -->|invariant check| pg

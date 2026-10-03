@@ -1,0 +1,29 @@
+flowchart LR
+  buyer((Buyer))
+  admin((Sale Administrator))
+  ops((Operations Engineer))
+  clock((Scheduler))
+
+  subgraph system [Flash Sale Platform]
+    uc1([View sale details and stock status])
+    uc2([Claim a unit])
+    uc3([Check reservation status])
+    uc4([Create flash sale])
+    uc5([Open / close sale])
+    uc6([View sale statistics and invariant report])
+    uc7([Process accepted reservation into order])
+    uc8([Expire abandoned holds])
+    uc9([Monitor health and metrics])
+  end
+
+  buyer --> uc1
+  buyer --> uc2
+  buyer --> uc3
+  admin --> uc4
+  admin --> uc5
+  admin --> uc6
+  ops --> uc9
+  ops --> uc6
+  clock --> uc7
+  clock --> uc8
+  uc2 -. includes .-> uc3

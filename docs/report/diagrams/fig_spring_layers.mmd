@@ -1,0 +1,27 @@
+flowchart TB
+  subgraph presentation [api - presentation]
+    c["RestController classes<br/>DTO records<br/>RestControllerAdvice producing ProblemDetail"]
+  end
+  subgraph application [application - use cases]
+    s["Service classes<br/>Transactional boundaries<br/>ports: StockGate, PaymentGateway, ReservationEventPublisher"]
+  end
+  subgraph domain [domain - model]
+    d["Entities and enums<br/>state transitions<br/>no Spring dependencies"]
+  end
+  subgraph infra [infrastructure - adapters]
+    jpa["persistence: Spring Data JPA repositories"]
+    redis["cache: RedisStockGate and Lua scripts"]
+    kafka["messaging: KafkaTemplate publisher, KafkaListener worker"]
+  end
+  subgraph boot [Spring Boot runtime]
+    auto["Auto-configuration, Actuator, Micrometer, Flyway, Docker Compose support"]
+  end
+
+  c --> s --> d
+  s --> jpa
+  s --> redis
+  s --> kafka
+  jpa --> d
+  boot -.-> presentation
+  boot -.-> application
+  boot -.-> infra

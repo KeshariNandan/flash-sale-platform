@@ -1,0 +1,18 @@
+flowchart LR
+  subgraph base [Baseline claim path - all work in the request thread]
+    b1[Controller] --> b2[ClaimService]
+    b2 --> b3[UPDATE inventory SET stock_remaining = stock_remaining - 1\nWHERE sale_id = ? AND stock_remaining > 0]
+    b3 --> b4[INSERT reservation]
+    b4 --> b5[charge payment - blocking]
+    b5 --> b6[INSERT customer_order]
+    b6 --> b7[COMMIT then 201 response]
+  end
+
+  subgraph opt [Optimised claim path - admission in memory, fulfilment async]
+    o1[Controller] --> o2[ClaimService]
+    o2 --> o3[Redis Lua: check, decrement, hold with TTL]
+    o3 --> o4[INSERT reservation PENDING + outbox row - one short tx]
+    o4 --> o5[202 response]
+    o4 -.-> o6[Outbox relay -> Kafka]
+    o6 -.-> o7[OrderWorker: payment, order, confirm]
+  end

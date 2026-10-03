@@ -1,0 +1,12 @@
+flowchart TB
+  req["HTTP request<br/>POST /api/v1/sales/:saleId/claims<br/>Headers: Authorization, Idempotency-Key"] --> sec["Spring Security filter<br/>JWT to principal userId"]
+  sec --> rl["RateLimitFilter<br/>Redis token bucket"]
+  rl --> ctl["Controller layer<br/>ClaimController<br/>validates path and headers, builds ClaimCommand"]
+  ctl --> svc["Service layer<br/>ClaimService.claim"]
+  svc --> gate["StockGate port<br/>RedisStockGate.tryReserve"]
+  gate --> lua[("Redis Lua script<br/>stock, per-user set, idempotency")]
+  svc --> tx["Transaction<br/>ReservationRepository.save<br/>OutboxRepository.save"]
+  tx --> pg[("PostgreSQL")]
+  svc --> res["ClaimResult<br/>ACCEPTED / SOLD_OUT / DUPLICATE / CLOSED"]
+  res --> view["Response mapping<br/>202 ReservationResponse JSON<br/>409 ProblemDetail JSON"]
+  view --> out["HTTP response"]

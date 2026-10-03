@@ -1,0 +1,88 @@
+classDiagram
+  direction LR
+
+  class FlashSale {
+    +UUID id
+    +String sku
+    +String name
+    +Instant startAt
+    +Instant endAt
+    +int initialStock
+    +int perUserLimit
+    +Duration holdTtl
+    +SaleStatus status
+    +open()
+    +close()
+    +markSoldOut()
+    +isOpenAt(Instant)
+  }
+
+  class Inventory {
+    +UUID saleId
+    +int stockRemaining
+    +long version
+    +tryDecrement() boolean
+    +release(int)
+  }
+
+  class Reservation {
+    +UUID id
+    +UUID saleId
+    +String userId
+    +String idempotencyKey
+    +ReservationStatus status
+    +Instant expiresAt
+    +Instant createdAt
+    +confirm()
+    +release(reason)
+    +expire()
+  }
+
+  class CustomerOrder {
+    +UUID id
+    +UUID reservationId
+    +UUID saleId
+    +String userId
+    +Money amount
+    +String paymentRef
+    +OrderStatus status
+    +Instant createdAt
+  }
+
+  class OutboxEvent {
+    +long id
+    +String aggregateType
+    +UUID aggregateId
+    +String eventType
+    +String payload
+    +Instant createdAt
+    +Instant publishedAt
+  }
+
+  class SaleStatus {
+    <<enumeration>>
+    SCHEDULED
+    OPEN
+    SOLD_OUT
+    CLOSED
+  }
+  class ReservationStatus {
+    <<enumeration>>
+    PENDING
+    CONFIRMED
+    RELEASED
+    EXPIRED
+  }
+  class OrderStatus {
+    <<enumeration>>
+    PAID
+    FAILED
+  }
+
+  FlashSale "1" --> "1" Inventory : stock
+  FlashSale "1" --> "0..*" Reservation : claims
+  Reservation "1" --> "0..1" CustomerOrder : fulfils
+  Reservation "1" --> "1" OutboxEvent : emits ReservationAccepted
+  FlashSale --> SaleStatus
+  Reservation --> ReservationStatus
+  CustomerOrder --> OrderStatus

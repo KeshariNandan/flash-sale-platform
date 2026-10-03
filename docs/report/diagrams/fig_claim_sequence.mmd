@@ -1,0 +1,47 @@
+sequenceDiagram
+  autonumber
+  participant C as Buyer client
+  participant F as Security + RateLimit filters
+  participant K as ClaimController
+  participant S as ClaimService
+  participant R as Redis (Lua)
+  participant P as PostgreSQL
+  participant X as Outbox relay
+  participant Q as Kafka
+  participant W as OrderWorker
+  participant G as Payment gateway
+
+  C->>F: POST /api/v1/sales/{id}/claims (JWT, Idempotency-Key)
+  F->>F: token bucket per user and global
+  alt limit exceeded
+    F-->>C: 429 Too Many Requests
+  end
+  F->>K: forward
+  K->>S: claim(saleId, userId, key)
+  S->>R: EVALSHA reserve.lua
+  alt sold out / duplicate
+    R-->>S: -1 or -2
+    S-->>K: SOLD_OUT / DUPLICATE
+    K-->>C: 409 problem+json
+  else accepted
+    R-->>S: 1 (hold written, TTL)
+    S->>P: one tx - insert reservation PENDING and outbox row, commit
+    alt DB failure
+      S->>R: EVALSHA release.lua (compensate)
+      K-->>C: 503 Retry-After
+    end
+    S-->>K: ACCEPTED(reservationId, expiresAt)
+    K-->>C: 202 Accepted
+  end
+  X->>P: SELECT ... FOR UPDATE SKIP LOCKED
+  X->>Q: produce ReservationAccepted (key = reservationId)
+  X->>P: UPDATE outbox SET published_at
+  Q->>W: poll
+  W->>G: charge(saved payment method)
+  alt payment ok
+    W->>P: insert order ON CONFLICT DO NOTHING, reservation CONFIRMED
+  else payment failed
+    W->>P: reservation RELEASED
+    W->>R: release.lua (unit back to stock)
+  end
+  W->>Q: ack offset
