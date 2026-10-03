@@ -22,12 +22,15 @@ public class SaleService {
 	private final FlashSaleRepository sales;
 	private final InventoryRepository inventories;
 	private final StockGate stockGate;
+	private final SaleStateCache saleState;
 	private final Clock clock;
 
-	public SaleService(FlashSaleRepository sales, InventoryRepository inventories, StockGate stockGate, Clock clock) {
+	public SaleService(FlashSaleRepository sales, InventoryRepository inventories, StockGate stockGate,
+			SaleStateCache saleState, Clock clock) {
 		this.sales = sales;
 		this.inventories = inventories;
 		this.stockGate = stockGate;
+		this.saleState = saleState;
 		this.clock = clock;
 	}
 
@@ -55,6 +58,7 @@ public class SaleService {
 		sale.open();
 		sales.save(sale);
 		stockGate.open(sale.getId(), sale.initialStock());
+		saleState.evict(saleId);
 		return sale;
 	}
 
@@ -64,6 +68,7 @@ public class SaleService {
 		sale.close();
 		sales.save(sale);
 		stockGate.close(sale.getId());
+		saleState.evict(saleId);
 		return sale;
 	}
 

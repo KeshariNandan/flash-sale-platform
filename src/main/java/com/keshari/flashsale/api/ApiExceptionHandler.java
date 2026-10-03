@@ -15,6 +15,7 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.MissingRequestHeaderException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.method.annotation.HandlerMethodValidationException;
 
 /**
  * Translates exceptions into RFC 9457 problem-details responses with a stable,
@@ -65,6 +66,16 @@ public class ApiExceptionHandler {
 	@ExceptionHandler(MissingRequestHeaderException.class)
 	ProblemDetail missingHeader(MissingRequestHeaderException ex) {
 		return problem(HttpStatus.BAD_REQUEST, "validation-error", "missing header " + ex.getHeaderName());
+	}
+
+	@ExceptionHandler(HandlerMethodValidationException.class)
+	ProblemDetail parameterValidation(HandlerMethodValidationException ex) {
+		return problem(HttpStatus.BAD_REQUEST, "validation-error", "request validation failed: " + ex.getReason());
+	}
+
+	@ExceptionHandler(CurrentBuyerArgumentResolver.UnauthenticatedException.class)
+	ProblemDetail unauthenticated(CurrentBuyerArgumentResolver.UnauthenticatedException ex) {
+		return problem(HttpStatus.UNAUTHORIZED, "unauthenticated", ex.getMessage());
 	}
 
 	@ExceptionHandler(Exception.class)

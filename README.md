@@ -7,8 +7,10 @@ sells more units than it has.
 Built as the Applied Software Project (backend specialization) for the
 Scaler Neovarsity / Woolf M.Sc. in Computer Science.
 
-> Status: initial setup. Infrastructure, build and package layout are in place;
-> domain, API and load tests are added incrementally (see commit history).
+> Status: in progress (see commit history). Done: schema, domain model, admin
+> sale API, claim endpoint with the baseline SQL gate, concurrency tests.
+> Next: Redis Lua gate, outbox relay + Kafka order worker, reconciler, JWT
+> security, rate limiting, k6 benchmark.
 
 ## What the system guarantees
 
@@ -35,15 +37,30 @@ flowchart LR
 
 Claim flow for one unit:
 
-1. `POST /sales/{saleId}/claims` with `Idempotency-Key` and `userId`.
-2. Redis Lua script: check stock, per-user limit, idempotency key; decrement; write hold with TTL.
-3. Same Postgres transaction: insert `PENDING` reservation + outbox row. Return `202` (or `409` sold out / duplicate).
-4. Outbox relay publishes to `sale.reservations` keyed by `saleId`.
+1. `POST /api/v1/sales/{saleId}/claims` with an `Idempotency-Key` header; buyer identity comes from the authenticated principal (`X-Buyer-Id` header until the JWT resource server lands), never from the body.
+2. `StockGate.tryReserve`: Redis Lua script (optimised) or conditional SQL `UPDATE` (baseline) decides accepted / sold-out / duplicate / replay.
+3. One short Postgres transaction: insert `PENDING` reservation + outbox row. Return `202` with `Location` (or `200` replay, `409` sold-out / duplicate-claim / sale-not-open).
+4. Outbox relay publishes `ReservationAccepted` to `sale.reservations`, keyed by reservation id.
 5. Order worker confirms the reservation and creates the order idempotently; payment failure releases the hold.
 6. Reconciler expires stale holds and asserts the stock invariant.
 
-A **baseline** strategy (plain SQL decrement, order written in the request thread,
-no Redis/Kafka) is kept behind a flag purely for the before/after benchmark.
+The **baseline** strategy (`flashsale.gate=sql`) exists only for the before/after
+benchmark; `flashsale.gate=redis` selects the optimised path. Controller, service
+and tests are identical for both.
+
+### API
+
+| Method | Path | Purpose |
+|---|---|---|
+| POST | `/api/v1/admin/sales` | Create a sale (SCHEDULED) |
+| POST | `/api/v1/admin/sales/{id}/open` | Open; loads stock into the gate |
+| POST | `/api/v1/admin/sales/{id}/close` | Close |
+| GET | `/api/v1/admin/sales[/{id}]` | Inspect |
+| POST | `/api/v1/sales/{id}/claims` | Claim one unit (`Idempotency-Key` header) |
+| GET | `/api/v1/reservations/{id}` | Reservation status |
+
+Errors are RFC 9457 problem details with stable `type`s (`sold-out`,
+`duplicate-claim`, `sale-not-open`, `illegal-transition`, `validation-error`, ...).
 
 ## Tech stack
 
