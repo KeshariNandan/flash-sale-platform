@@ -9,6 +9,8 @@
  *   <li>a reservation yields at most one order;</li>
  *   <li>an expired or failed reservation returns its unit to stock.</li>
  * </ul>
- * It depends on nothing outside the JDK and JPA annotations.
+ * It depends on nothing outside the JDK, JPA annotations and the Spring Data
+ * {@code Persistable} marker (ids are assigned in code, so entities declare
+ * whether they are new to avoid a SELECT before every INSERT on the hot path).
  */
 package com.keshari.flashsale.domain;
