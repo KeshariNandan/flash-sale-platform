@@ -109,6 +109,16 @@ Health: `http://localhost:8085/actuator/health`
 ./mvnw test          # JUnit 5; integration tests use Testcontainers (Docker required)
 ```
 
+With Colima instead of Docker Desktop, point Testcontainers at Colima's socket first:
+
+```bash
+export DOCKER_HOST="unix://$HOME/.colima/default/docker.sock"
+export TESTCONTAINERS_DOCKER_SOCKET_OVERRIDE=/var/run/docker.sock
+```
+
+The build uses the project-local `.mvn/settings.xml` (Maven Central only), so it
+does not depend on any corporate mirror configured in `~/.m2/settings.xml`.
+
 Load tests (k6) live in `load-test/` and simulate 1,000,000 purchase attempts
 with a bounded number of virtual users. Results are recorded per run in
 `load-test/results/` for the baseline and optimized strategies.

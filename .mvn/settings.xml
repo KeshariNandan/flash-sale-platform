@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Project-local Maven settings: resolve everything from Maven Central.
+  Selected automatically via .mvn/maven.config so the build does not depend on
+  any developer's ~/.m2/settings.xml (corporate mirrors, VPN-only repositories).
+-->
+<settings xmlns="http://maven.apache.org/SETTINGS/1.0.0"
+          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+          xsi:schemaLocation="http://maven.apache.org/SETTINGS/1.0.0
+                              https://maven.apache.org/xsd/settings-1.0.0.xsd">
+</settings>
