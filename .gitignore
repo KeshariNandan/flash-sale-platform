@@ -38,3 +38,9 @@ build/
 ### Report tooling (generated .docx/.pdf are build outputs, submitted via the portal)
 .venv/
 docs/report/out/
+
+### Load-test artefacts (summaries in *.md are committed; raw dumps are not)
+load-test/results/*.json
+load-test/results/*.log
+load-test/results/sale.env
+load-test/bin/
