@@ -8,9 +8,9 @@ Built as the Applied Software Project (backend specialization) for the
 Scaler Neovarsity / Woolf M.Sc. in Computer Science.
 
 > Status: in progress (see commit history). Done: schema, domain model, admin
-> sale API, claim endpoint with the baseline SQL gate, concurrency tests.
-> Next: Redis Lua gate, outbox relay + Kafka order worker, reconciler, JWT
-> security, rate limiting, k6 benchmark.
+> sale API, claim endpoint with the baseline SQL gate, concurrency tests, k6
+> harness. Next: Redis Lua gate, outbox relay + Kafka order worker, reconciler,
+> JWT security, rate limiting, measured 1M comparison.
 
 ## What the system guarantees
 
