@@ -152,17 +152,17 @@ Because the generator and the system under test share one machine, the absolute 
 Table: Baseline strategy, one million attempts
 | Metric | Value |
 |---|---|
-| Wall-clock duration | [TO FILL] s |
-| Achieved request rate | [TO FILL] req/s |
-| Latency p50 / p95 / p99 | [TO FILL] ms / [TO FILL] ms / [TO FILL] ms |
-| Maximum latency | [TO FILL] ms |
-| 201 accepted (orders created) | [TO FILL] (must be 1,000 minus payment failures released) |
-| 409 sold out | [TO FILL] |
-| 409 duplicate | [TO FILL] |
-| 5xx errors | [TO FILL] |
-| PostgreSQL peak active connections / lock waits | [TO FILL] |
-| Confirmed orders in database after run | [TO FILL] |
-| Oversell count (orders minus stock, if positive) | [TO FILL] (expected 0) |
+| Wall-clock duration | 222.8 s |
+| Achieved request rate | 4,488 req/s |
+| Latency p50 / p95 / p99 | 42.21 / 77.71 / 99.17 ms |
+| Maximum latency | 605.83 ms |
+| 202 accepted (PENDING reservations) | 1,000 |
+| 409 sold out | 979,563 |
+| 409 duplicate | 19,437 |
+| 5xx errors | 0 |
+| PostgreSQL peak active connections / lock waits | default Hikari pool (10); accepted-path p99 416 ms shows the single-row lock queue |
+| Confirmed orders in database after run | 0 (order worker not yet deployed; 1,000 PENDING holds match stock) |
+| Oversell count (pending + remaining − initial, if positive) | 0 |
 
 Table: Optimised strategy, one million attempts
 | Metric | Value |
@@ -191,6 +191,8 @@ Table: Reconciler expiry query before and after the partial index
 
 ## Interpretation
 
-[TO FILL after both runs: two or three paragraphs. Compare p99 and throughput; explain where the baseline spent its time, using the PostgreSQL lock-wait and connection figures; note that rejections in the optimised path cost one Redis round trip; confirm both runs produced zero oversell and that the invariant report passed; comment on how long the worker took to drain the accepted reservations and what limited it, most likely the simulated payment latency multiplied by the consumer concurrency. State the improvement as a ratio and in absolute milliseconds. If the rate limiter produced 429s, explain the chosen limits.]
+The baseline run finished one million attempts in 222.8 s at 4,488 req/s on this laptop and produced exactly 1,000 PENDING reservations, zero remaining stock and zero oversell. That is the correctness bar. The latency story is less flattering and is the reason the Redis gate exists. k6's overall p99 is 99 ms only because 979,563 of the attempts are sold-out rejects; those still take the inventory-row lock, but they return as soon as the `UPDATE … WHERE stock_remaining > 0` affects zero rows. The 1,000 accepted claims, isolated as HTTP 2xx, have p50 144 ms and p99 416 ms: each winner waits behind the same row lock as every reject. Adding virtual users cannot make that queue shorter.
+
+[TO FILL after the Redis run: compare p99 and throughput; note that rejections in the optimised path cost one Redis round trip; confirm both runs produced zero oversell; comment on worker drain time. State the improvement as a ratio and in absolute milliseconds.]
 
 The result that matters most is not the latency ratio but the shape of the two curves under load. In the baseline, every additional concurrent attempt joins the queue for the same row lock, so latency rises with load without bound until connections are exhausted. In the optimised path, rejections are served from memory and accepted claims perform a short, contention-free insert, so latency stays close to flat as attempts increase and the database sees only as many writes as there are units of stock. That change in shape is what allows the system to absorb a burst it cannot fully serve, which is the definition of graceful degradation.
