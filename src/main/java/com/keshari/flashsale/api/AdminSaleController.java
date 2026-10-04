@@ -87,4 +87,9 @@ public class AdminSaleController {
 	public SaleResponse close(@PathVariable UUID saleId) {
 		return SaleResponse.from(sales.close(saleId));
 	}
+
+	@GetMapping("/{saleId}/stats")
+	public SaleService.SaleStats stats(@PathVariable UUID saleId) {
+		return sales.stats(saleId);
+	}
 }

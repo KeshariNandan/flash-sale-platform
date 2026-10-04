@@ -85,4 +85,19 @@ class AdminSaleApiTest {
 		assertThat(resp.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
 		assertThat(resp.getBody().getType().toString()).endsWith("/not-found");
 	}
+
+	@Test
+	void statsReportRemainingStockAndZeroOversellOnAFreshSale() {
+		ResponseEntity<Map> created = http.postForEntity("/api/v1/admin/sales", validSale(), Map.class);
+		String id = (String) created.getBody().get("id");
+		http.postForEntity("/api/v1/admin/sales/" + id + "/open", null, Map.class);
+
+		ResponseEntity<Map> stats = http.getForEntity("/api/v1/admin/sales/" + id + "/stats", Map.class);
+		assertThat(stats.getStatusCode()).isEqualTo(HttpStatus.OK);
+		assertThat(stats.getBody().get("initialStock")).isEqualTo(100);
+		assertThat(stats.getBody().get("stockRemaining")).isEqualTo(100);
+		assertThat(stats.getBody().get("pending")).isEqualTo(0);
+		assertThat(stats.getBody().get("accounted")).isEqualTo(100);
+		assertThat(stats.getBody().get("oversell")).isEqualTo(0);
+	}
 }

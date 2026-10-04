@@ -56,6 +56,7 @@ and tests are identical for both.
 | POST | `/api/v1/admin/sales/{id}/open` | Open; loads stock into the gate |
 | POST | `/api/v1/admin/sales/{id}/close` | Close |
 | GET | `/api/v1/admin/sales[/{id}]` | Inspect |
+| GET | `/api/v1/admin/sales/{id}/stats` | Stock + reservation counts, oversell |
 | POST | `/api/v1/sales/{id}/claims` | Claim one unit (`Idempotency-Key` header) |
 | GET | `/api/v1/reservations/{id}` | Reservation status |
 
