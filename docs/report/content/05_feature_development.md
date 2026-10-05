@@ -87,7 +87,7 @@ Everything after step 7, the outbox relay, Kafka, the payment charge and the ord
 
 ## The reserve script
 
-The whole correctness argument for admission rests on one Lua script, reproduced below. Redis executes a script as a single command on its command thread, so no other client's command can run between the read of the stock and the write of the decrement. The script therefore replaces what would otherwise be a database row lock or a compare-and-swap retry loop.
+The whole correctness argument for admission rests on one Lua script, reproduced below and loaded by `RedisStockGate` from `src/main/resources/redis/reserve.lua`. Redis executes a script as a single command on its command thread, so no other client's command can run between the read of the stock and the write of the decrement. The script therefore replaces what would otherwise be a database row lock or a compare-and-swap retry loop. Keys are hash-tagged `{sale:<id>}` so the same EVAL is valid on a Redis Cluster.
 
 ```
 -- KEYS[1] = {sale:<id>}:stock

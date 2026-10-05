@@ -40,6 +40,23 @@ Figure 3.02 shows the service and adapter classes and the interfaces between the
 
 `RedisStockGate` wraps two Lua scripts loaded once at start-up and invoked by their SHA. `SqlStockGate` implements the same interface with a conditional `UPDATE` on `inventory` and exists only to provide the baseline for the benchmark. `SimulatedPaymentGateway` sleeps for a configurable latency and fails a configurable fraction of charges, which allows the payment-failure and release paths to be exercised in tests and under load.
 
+Table: Application and adapter classes (as implemented)
+| Class | Package | Role |
+|---|---|---|
+| ClaimController | api | POST claim, GET reservation; maps `ClaimResult` to HTTP. |
+| AdminSaleController | api | Create / open / close / inspect / stats. |
+| CurrentBuyerArgumentResolver | api | Interim `X-Buyer-Id`; later the JWT subject. |
+| ApiExceptionHandler | api | RFC 9457 problem details. |
+| ClaimService | application | Claim policy: cache, gate, persist, release on failure. |
+| SaleService | application | Sale lifecycle; loads stock into the gate on open. |
+| SaleStateCache | application | Short-TTL snapshot so closed sales skip Redis and SQL. |
+| StockGate | application | Admission port (`tryReserve`, `release`, `remaining`). |
+| SqlStockGate | infrastructure.persistence | Baseline conditional UPDATE. |
+| RedisStockGate | infrastructure.cache | Optimised Lua EVAL. |
+| RedisSaleKeys | infrastructure.cache | Hash-tagged key layout per sale. |
+| OutboxRelay | infrastructure.messaging | Not yet implemented; `FOR UPDATE SKIP LOCKED` query is in place. |
+| OrderWorker, ReconciliationService, PaymentGateway | application / infrastructure | Day 5–6. |
+
 ## Claim sequence
 
 Figure 3.03 traces one claim through every participant, including the alternative outcomes. The important property visible in the diagram is that the buyer's response is sent as soon as the short database transaction commits; the payment, the Kafka round trip and the order insert all happen after the response and never add to the buyer's latency.

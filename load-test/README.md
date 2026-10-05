@@ -22,7 +22,7 @@ get `409 duplicate-claim`; everyone else after stock is gone gets `409 sold-out`
 Run twice on that shape:
 
 1. `baseline` — `flashsale.gate=sql`
-2. `optimized` — `flashsale.gate=redis` (Day 4+)
+2. `optimized` — `flashsale.gate=redis` (same `claim.js`; start the app with `--flashsale.gate=redis`)
 
 ## How to run
 
@@ -47,6 +47,8 @@ measured sale:
 
 ```bash
 ./load-test/run-baseline.sh
+# after restarting the app with --flashsale.gate=redis and seeding a new sale:
+./load-test/run-optimized.sh
 ```
 
 Recorded per run in `results/`: machine specs, VUs, achieved RPS, duration,
