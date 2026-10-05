@@ -96,6 +96,7 @@ class AdminSaleApiTest {
 		assertThat(stats.getStatusCode()).isEqualTo(HttpStatus.OK);
 		assertThat(stats.getBody().get("initialStock")).isEqualTo(100);
 		assertThat(stats.getBody().get("stockRemaining")).isEqualTo(100);
+		assertThat(stats.getBody().get("gateRemaining")).isEqualTo(100);
 		assertThat(stats.getBody().get("pending")).isEqualTo(0);
 		assertThat(stats.getBody().get("accounted")).isEqualTo(100);
 		assertThat(stats.getBody().get("oversell")).isEqualTo(0);

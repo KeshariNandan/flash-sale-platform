@@ -63,8 +63,14 @@ public class ClaimService {
 		}
 
 		UUID reservationId = UUID.randomUUID();
-		GateDecision decision = gate.tryReserve(cmd.saleId(), cmd.userId(), cmd.idempotencyKey(), reservationId,
-				sale.holdTtl());
+		GateDecision decision;
+		try {
+			decision = gate.tryReserve(cmd.saleId(), cmd.userId(), cmd.idempotencyKey(), reservationId, sale.holdTtl());
+		}
+		catch (DataAccessException e) {
+			log.warn("stock gate unavailable for sale={}: {}", cmd.saleId(), e.getMostSpecificCause().getMessage());
+			return new ClaimResult.GateUnavailable("stock gate unavailable");
+		}
 
 		return switch (decision) {
 			case GateDecision.SoldOut s -> new ClaimResult.SoldOut();
