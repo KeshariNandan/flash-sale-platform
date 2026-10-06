@@ -5,6 +5,7 @@ import com.keshari.flashsale.config.FlashSaleProperties;
 import java.math.BigDecimal;
 import java.util.Random;
 import java.util.UUID;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 /**
@@ -19,6 +20,7 @@ public class SimulatedPaymentGateway implements PaymentGateway {
 	private final double failureRate;
 	private final Random random;
 
+	@Autowired
 	public SimulatedPaymentGateway(FlashSaleProperties properties) {
 		this(properties.payment().latencyMs(), properties.payment().failureRate(), new Random());
 	}
