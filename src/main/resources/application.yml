@@ -1,6 +1,17 @@
 flashsale:
   # Admission strategy: "sql" (baseline, benchmark reference) or "redis" (optimised).
   gate: sql
+  kafka:
+    reservations-topic: sale.reservations
+    dlt-topic: sale.reservations.DLT
+    partitions: 6
+  outbox:
+    batch-size: 50
+    poll-ms: 200
+    enabled: true
+  payment:
+    latency-ms: 20
+    failure-rate: 0
 
 spring:
   application:
@@ -19,12 +30,19 @@ spring:
     locations: classpath:db/migration
 
   kafka:
+    producer:
+      acks: all
+      properties:
+        enable.idempotence: true
     consumer:
       group-id: flash-sale-order-worker
       auto-offset-reset: earliest
       enable-auto-commit: false
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
     listener:
       ack-mode: manual_immediate
+      concurrency: 3
 
   docker:
     compose:

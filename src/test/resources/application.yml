@@ -1,0 +1,13 @@
+# Keep claim-API tests deterministic: the relay and worker stay off unless a
+# pipeline test turns them on. Existing suites assert PENDING right after claim.
+flashsale:
+  outbox:
+    enabled: false
+  payment:
+    latency-ms: 0
+    failure-rate: 0
+
+spring:
+  kafka:
+    listener:
+      auto-startup: false
