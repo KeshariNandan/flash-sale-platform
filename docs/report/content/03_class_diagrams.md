@@ -54,8 +54,12 @@ Table: Application and adapter classes (as implemented)
 | SqlStockGate | infrastructure.persistence | Baseline conditional UPDATE. |
 | RedisStockGate | infrastructure.cache | Optimised Lua EVAL. |
 | RedisSaleKeys | infrastructure.cache | Hash-tagged key layout per sale. |
-| OutboxRelay | infrastructure.messaging | Not yet implemented; `FOR UPDATE SKIP LOCKED` query is in place. |
-| OrderWorker, ReconciliationService, PaymentGateway | application / infrastructure | Day 5–6. |
+| OutboxRelay | infrastructure.messaging | Publishes unpublished outbox rows to Kafka. |
+| ReservationEventPublisher | application | Port; Kafka adapter keys records by reservation id. |
+| OrderWorker | infrastructure.messaging | Kafka listener; acks after fulfilment. |
+| FulfilmentService | application | Charge, confirm + insert order, or release the hold. |
+| PaymentGateway / SimulatedPaymentGateway | application / infrastructure.payment | Charge after admission; configurable latency and failure rate. |
+| ReconciliationService | application | Day 6. |
 
 ## Claim sequence
 

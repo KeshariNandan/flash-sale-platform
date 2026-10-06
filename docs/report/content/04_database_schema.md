@@ -163,7 +163,21 @@ Table: Redis keys per sale
 | {sale:<id>}:stock | string (integer) | Remaining units. Set on open, decremented by the reserve script, incremented by the release script. Deleted on close. |
 | {sale:<id>}:buyers | set | user ids that hold or bought a unit. Membership check enforces the per-user limit. Expires with the sale. |
 | {sale:<id>}:hold:<userId> | string | Reservation id, with TTL equal to the sale's hold TTL. Its expiry is the trigger the reconciler confirms against the database. |
-| idem:<userId>:<key> | string (JSON) | The original outcome for an idempotency key, TTL 24 hours. |
+| {sale:<id>}:idem:<userId>:<key> | string | Original reservation id for an idempotency key, TTL 24 hours. Hash-tagged with the sale so EVAL stays in one cluster slot. |
 | rl:user:<userId> and rl:global | string (integer) | Token-bucket counters for rate limiting, TTL one second. |
 
 The `buyers` set rather than a per-user counter is used because the per-user limit in this project is one; the design note in the Conclusion describes the small change needed for higher limits.
+
+## Messaging keys
+
+The outbox row and the Kafka record share one identifier so a retry can be matched to the reservation it describes.
+
+Table: Publication keys
+| Where | Key | Why this key |
+|---|---|---|
+| outbox_event.aggregate_id | reservation id | One ReservationAccepted per reservation; the relay publishes in id order. |
+| Kafka record key on `sale.reservations` | reservation id | Spreads a sale across six partitions. Keying by sale id would pin every claim to one partition and one worker thread. |
+| Kafka record value | jsonb payload of ReservationAccepted | Same bytes the outbox stored; the worker does not re-derive the event. |
+| customer_order.reservation_id | reservation id (UNIQUE) | Target of `INSERT … ON CONFLICT DO NOTHING` so a second delivery cannot create a second order. |
+
+Cardinality used when reading the ER diagram: sale 1:1 inventory, sale 1:m reservation, reservation 1:0..1 order, reservation 1:1 outbox event. Those ratios are enforced by the primary keys and unique indexes above, not only by application code.
