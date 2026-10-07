@@ -27,6 +27,11 @@ public final class RedisSaleKeys {
 		return tag(saleId) + ":idem:" + userId + ":" + key;
 	}
 
+	/** Marks a reservation whose unit has already been returned, so TTL expiry and a late release cannot double-increment. */
+	public static String released(UUID saleId, UUID reservationId) {
+		return tag(saleId) + ":released:" + reservationId;
+	}
+
 	private static String tag(UUID saleId) {
 		return "{sale:" + saleId + "}";
 	}

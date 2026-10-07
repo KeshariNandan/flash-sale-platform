@@ -15,5 +15,6 @@ class RedisSaleKeysTest {
 		assertThat(RedisSaleKeys.buyers(sale)).startsWith(tag);
 		assertThat(RedisSaleKeys.hold(sale, "u1")).isEqualTo(tag + ":hold:u1");
 		assertThat(RedisSaleKeys.idempotency(sale, "u1", "k")).isEqualTo(tag + ":idem:u1:k");
+		assertThat(RedisSaleKeys.released(sale, sale)).isEqualTo(tag + ":released:" + sale);
 	}
 }

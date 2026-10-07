@@ -108,4 +108,18 @@ class RedisStockGateTest {
 		gate.release(sale, "buyer-d", UUID.randomUUID());
 		assertThat(gate.remaining(sale)).isZero();
 	}
+
+	@Test
+	void releaseAfterHoldKeyExpiresStillReturnsTheUnitOnce() throws Exception {
+		UUID sale = UUID.randomUUID();
+		gate.open(sale, 2);
+		UUID reservation = UUID.randomUUID();
+		gate.tryReserve(sale, "buyer-e", "key-e", reservation, Duration.ofSeconds(1));
+		assertThat(gate.remaining(sale)).isEqualTo(1);
+		Thread.sleep(1100);
+		gate.release(sale, "buyer-e", reservation);
+		assertThat(gate.remaining(sale)).isEqualTo(2);
+		gate.release(sale, "buyer-e", reservation);
+		assertThat(gate.remaining(sale)).isEqualTo(2);
+	}
 }

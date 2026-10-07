@@ -68,7 +68,7 @@ public class RedisStockGate implements StockGate {
 
 	@Override
 	public void release(UUID saleId, String userId, UUID reservationId) {
-		redis.execute(release, releaseKeys(saleId, userId), userId, reservationId.toString());
+		redis.execute(release, releaseKeys(saleId, userId, reservationId), userId, reservationId.toString());
 	}
 
 	@Override
@@ -87,10 +87,10 @@ public class RedisStockGate implements StockGate {
 				RedisSaleKeys.idempotency(saleId, userId, key));
 	}
 
-	/** Idempotency key is unknown on release; the hold id is the authority. */
-	private static List<String> releaseKeys(UUID saleId, String userId) {
+	/** Idempotency key is unknown on release; the released marker plus hold id are the authority. */
+	private static List<String> releaseKeys(UUID saleId, String userId, UUID reservationId) {
 		return List.of(RedisSaleKeys.stock(saleId), RedisSaleKeys.buyers(saleId), RedisSaleKeys.hold(saleId, userId),
-				"");
+				"", RedisSaleKeys.released(saleId, reservationId));
 	}
 
 	private static int asInt(Object value) {
