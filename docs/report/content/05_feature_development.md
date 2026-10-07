@@ -118,7 +118,7 @@ Figure 5.02 illustrates two requests arriving for the last unit. Whichever scrip
 
 ![Two concurrent claims for the last unit resolved by Redis's single command thread](diagrams/fig_redis_race.png)
 
-A companion `release` script increments stock, removes the buyer from the set and deletes the hold. It is invoked by the service on database failure, by the order worker on payment failure, and by the reconciler on expiry. Each call is idempotent because it first checks that the hold key still refers to the reservation being released.
+A companion `release` script increments stock, removes the buyer from the set and deletes the hold. It is invoked by the service on database failure, by the order worker on payment failure, and by the reconciler on expiry. Each reservation is released at most once: a `{sale}:released:<reservationId>` marker prevents a second increment after the hold key has expired. A call for a reservation that no longer owns the hold (the buyer already has a newer one) is a no-op.
 
 ## Performance optimisation
 

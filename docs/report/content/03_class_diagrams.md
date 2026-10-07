@@ -59,7 +59,7 @@ Table: Application and adapter classes (as implemented)
 | OrderWorker | infrastructure.messaging | Kafka listener; acks after fulfilment. |
 | FulfilmentService | application | Charge, confirm + insert order, or release the hold. |
 | PaymentGateway / SimulatedPaymentGateway | application / infrastructure.payment | Charge after admission; configurable latency and failure rate. |
-| ReconciliationService | application | Day 6. |
+| ReconciliationService | application | Expires stale PENDING holds, releases the gate, reopens SOLD_OUT, and reports the stock invariant. |
 
 ## Claim sequence
 

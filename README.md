@@ -9,7 +9,7 @@ Scaler Neovarsity / Woolf M.Sc. in Computer Science.
 
 > Status: in progress (see commit history). Done: schema, domain, admin API,
 > claim path, SQL and Redis gates, outbox relay, Kafka order worker, simulated
-> payment, k6 baseline 1M. Next: reconciler, JWT, rate limiting, optimised 1M.
+> payment, hold reconciler, k6 baseline 1M. Next: JWT, rate limiting, optimised 1M.
 
 ## What the system guarantees
 
@@ -56,6 +56,8 @@ and tests are identical for both.
 | POST | `/api/v1/admin/sales/{id}/close` | Close |
 | GET | `/api/v1/admin/sales[/{id}]` | Inspect |
 | GET | `/api/v1/admin/sales/{id}/stats` | Stock + reservation counts, oversell |
+| GET | `/api/v1/admin/sales/{id}/invariant` | `confirmed + pending + gate remaining == initial stock` |
+| POST | `/api/v1/admin/sales/{id}/reconcile` | Expire stale holds, then return the invariant |
 | POST | `/api/v1/sales/{id}/claims` | Claim one unit (`Idempotency-Key` header) |
 | GET | `/api/v1/reservations/{id}` | Reservation status |
 
