@@ -3,7 +3,7 @@ package com.keshari.flashsale.config;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 
 @ConfigurationProperties(prefix = "flashsale")
-public record FlashSaleProperties(String gate, Kafka kafka, Outbox outbox, Payment payment) {
+public record FlashSaleProperties(String gate, Kafka kafka, Outbox outbox, Payment payment, Reconciler reconciler) {
 
 	public FlashSaleProperties {
 		if (gate == null || gate.isBlank()) {
@@ -17,6 +17,9 @@ public record FlashSaleProperties(String gate, Kafka kafka, Outbox outbox, Payme
 		}
 		if (payment == null) {
 			payment = new Payment(20, 0);
+		}
+		if (reconciler == null) {
+			reconciler = new Reconciler(true, 1000, 100);
 		}
 	}
 
@@ -41,6 +44,17 @@ public record FlashSaleProperties(String gate, Kafka kafka, Outbox outbox, Payme
 			}
 			if (pollMs <= 0) {
 				pollMs = 200;
+			}
+		}
+	}
+
+	public record Reconciler(boolean enabled, long pollMs, int batchSize) {
+		public Reconciler {
+			if (pollMs <= 0) {
+				pollMs = 1000;
+			}
+			if (batchSize <= 0) {
+				batchSize = 100;
 			}
 		}
 	}

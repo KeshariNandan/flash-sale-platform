@@ -12,6 +12,10 @@ flashsale:
   payment:
     latency-ms: 20
     failure-rate: 0
+  reconciler:
+    enabled: true
+    poll-ms: 1000
+    batch-size: 100
 
 spring:
   application:
