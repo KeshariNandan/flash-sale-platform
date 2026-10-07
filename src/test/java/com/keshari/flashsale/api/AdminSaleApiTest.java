@@ -101,4 +101,30 @@ class AdminSaleApiTest {
 		assertThat(stats.getBody().get("accounted")).isEqualTo(100);
 		assertThat(stats.getBody().get("oversell")).isEqualTo(0);
 	}
+
+	@Test
+	void invariantOnAFreshSaleHolds() {
+		ResponseEntity<Map> created = http.postForEntity("/api/v1/admin/sales", validSale(), Map.class);
+		String id = (String) created.getBody().get("id");
+		http.postForEntity("/api/v1/admin/sales/" + id + "/open", null, Map.class);
+
+		ResponseEntity<Map> report = http.getForEntity("/api/v1/admin/sales/" + id + "/invariant", Map.class);
+		assertThat(report.getStatusCode()).isEqualTo(HttpStatus.OK);
+		assertThat(report.getBody().get("holds")).isEqualTo(true);
+		assertThat(report.getBody().get("accounted")).isEqualTo(100);
+		assertThat(report.getBody().get("gateRemaining")).isEqualTo(100);
+		assertThat(report.getBody().get("deficit")).isEqualTo(0);
+	}
+
+	@Test
+	void reconcileReturnsTheSameBalance() {
+		ResponseEntity<Map> created = http.postForEntity("/api/v1/admin/sales", validSale(), Map.class);
+		String id = (String) created.getBody().get("id");
+		http.postForEntity("/api/v1/admin/sales/" + id + "/open", null, Map.class);
+
+		ResponseEntity<Map> report = http.postForEntity("/api/v1/admin/sales/" + id + "/reconcile", null, Map.class);
+		assertThat(report.getStatusCode()).isEqualTo(HttpStatus.OK);
+		assertThat(report.getBody().get("holds")).isEqualTo(true);
+		assertThat(report.getBody().get("accounted")).isEqualTo(100);
+	}
 }

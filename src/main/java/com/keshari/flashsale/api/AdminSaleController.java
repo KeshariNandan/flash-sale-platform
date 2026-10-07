@@ -1,5 +1,6 @@
 package com.keshari.flashsale.api;
 
+import com.keshari.flashsale.application.ReconciliationService;
 import com.keshari.flashsale.application.SaleService;
 import com.keshari.flashsale.domain.FlashSale;
 import jakarta.validation.Valid;
@@ -31,9 +32,11 @@ import org.springframework.web.bind.annotation.RestController;
 public class AdminSaleController {
 
 	private final SaleService sales;
+	private final ReconciliationService reconciler;
 
-	public AdminSaleController(SaleService sales) {
+	public AdminSaleController(SaleService sales, ReconciliationService reconciler) {
 		this.sales = sales;
+		this.reconciler = reconciler;
 	}
 
 	public record CreateSaleRequest(
@@ -91,5 +94,15 @@ public class AdminSaleController {
 	@GetMapping("/{saleId}/stats")
 	public SaleService.SaleStats stats(@PathVariable UUID saleId) {
 		return sales.stats(saleId);
+	}
+
+	@GetMapping("/{saleId}/invariant")
+	public ReconciliationService.InvariantReport invariant(@PathVariable UUID saleId) {
+		return reconciler.invariantReport(saleId);
+	}
+
+	@PostMapping("/{saleId}/reconcile")
+	public ReconciliationService.InvariantReport reconcile(@PathVariable UUID saleId) {
+		return reconciler.reconcile(saleId);
 	}
 }
