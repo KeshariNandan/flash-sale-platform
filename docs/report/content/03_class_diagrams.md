@@ -45,7 +45,9 @@ Table: Application and adapter classes (as implemented)
 |---|---|---|
 | ClaimController | api | POST claim, GET reservation; maps `ClaimResult` to HTTP. |
 | AdminSaleController | api | Create / open / close / inspect / stats. |
-| CurrentBuyerArgumentResolver | api | Interim `X-Buyer-Id`; later the JWT subject. |
+| CurrentBuyerArgumentResolver | api | JWT subject, or `X-Buyer-Id` when security is off. |
+| SecurityConfig | config | HS256 resource server; admin routes require `ROLE_ADMIN`. |
+| RedisRateLimiter / RateLimitFilter | infrastructure.cache / api | Per-user and global token buckets; 429 + Retry-After. |
 | ApiExceptionHandler | api | RFC 9457 problem details. |
 | ClaimService | application | Claim policy: cache, gate, persist, release on failure. |
 | SaleService | application | Sale lifecycle; loads stock into the gate on open. |
