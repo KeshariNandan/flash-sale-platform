@@ -8,8 +8,8 @@ import java.lang.annotation.Target;
 /**
  * Injects the authenticated buyer's id into a controller parameter. Resolution
  * is centralised in {@link CurrentBuyerArgumentResolver} so controllers never
- * read identity from the request body and the source (header today, JWT
- * subject once the resource server is configured) can change in one place.
+ * read identity from the request body. The source is the JWT subject, or the
+ * interim {@code X-Buyer-Id} header when the resource server is disabled.
  */
 @Target(ElementType.PARAMETER)
 @Retention(RetentionPolicy.RUNTIME)

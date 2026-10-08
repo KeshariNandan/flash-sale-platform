@@ -3,7 +3,8 @@ package com.keshari.flashsale.config;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 
 @ConfigurationProperties(prefix = "flashsale")
-public record FlashSaleProperties(String gate, Kafka kafka, Outbox outbox, Payment payment, Reconciler reconciler) {
+public record FlashSaleProperties(String gate, Kafka kafka, Outbox outbox, Payment payment, Reconciler reconciler,
+			Security security, RateLimit rateLimit) {
 
 	public FlashSaleProperties {
 		if (gate == null || gate.isBlank()) {
@@ -20,6 +21,12 @@ public record FlashSaleProperties(String gate, Kafka kafka, Outbox outbox, Payme
 		}
 		if (reconciler == null) {
 			reconciler = new Reconciler(true, 1000, 100);
+		}
+		if (security == null) {
+			security = new Security(true, "local-dev-only-hs256-secret-32b!!");
+		}
+		if (rateLimit == null) {
+			rateLimit = new RateLimit(true, 10, 20_000);
 		}
 	}
 
@@ -55,6 +62,25 @@ public record FlashSaleProperties(String gate, Kafka kafka, Outbox outbox, Payme
 			}
 			if (batchSize <= 0) {
 				batchSize = 100;
+			}
+		}
+	}
+
+	public record Security(boolean enabled, String jwtSecret) {
+		public Security {
+			if (jwtSecret == null || jwtSecret.isBlank()) {
+				jwtSecret = "local-dev-only-hs256-secret-32b!!";
+			}
+		}
+	}
+
+	public record RateLimit(boolean enabled, int userPerSecond, int globalPerSecond) {
+		public RateLimit {
+			if (userPerSecond <= 0) {
+				userPerSecond = 10;
+			}
+			if (globalPerSecond <= 0) {
+				globalPerSecond = 20_000;
 			}
 		}
 	}

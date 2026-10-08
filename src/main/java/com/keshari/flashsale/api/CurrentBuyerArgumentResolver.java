@@ -2,6 +2,9 @@ package com.keshari.flashsale.api;
 
 import java.util.List;
 import org.springframework.core.MethodParameter;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Component;
 import org.springframework.web.bind.support.WebDataBinderFactory;
 import org.springframework.web.context.request.NativeWebRequest;
@@ -10,9 +13,8 @@ import org.springframework.web.method.support.ModelAndViewContainer;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
 /**
- * Interim identity source: the {@code X-Buyer-Id} header. This is replaced by
- * the verified JWT subject when Spring Security is wired in; the controller
- * contract ({@link CurrentBuyer}) does not change.
+ * Buyer identity from the verified JWT subject. When the resource server is
+ * disabled (tests), the interim {@code X-Buyer-Id} header is accepted.
  */
 @Component
 public class CurrentBuyerArgumentResolver implements HandlerMethodArgumentResolver, WebMvcConfigurer {
@@ -32,11 +34,26 @@ public class CurrentBuyerArgumentResolver implements HandlerMethodArgumentResolv
 	@Override
 	public Object resolveArgument(MethodParameter parameter, ModelAndViewContainer mavContainer,
 			NativeWebRequest webRequest, WebDataBinderFactory binderFactory) {
+		String fromJwt = subjectFromSecurityContext();
+		if (fromJwt != null) {
+			return fromJwt;
+		}
 		String buyer = webRequest.getHeader(HEADER);
 		if (buyer == null || buyer.isBlank()) {
 			throw new UnauthenticatedException();
 		}
 		return buyer.trim();
+	}
+
+	static String subjectFromSecurityContext() {
+		Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+		if (auth != null && auth.getPrincipal() instanceof Jwt jwt) {
+			String sub = jwt.getSubject();
+			if (sub != null && !sub.isBlank()) {
+				return sub.trim();
+			}
+		}
+		return null;
 	}
 
 	/** No buyer identity on the request; mapped to 401. */
