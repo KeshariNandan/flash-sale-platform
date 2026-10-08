@@ -33,9 +33,12 @@ echo "running ${SCENARIO} against sale ${SALE_ID} at ${BASE_URL}"
 	-e SCENARIO="${SCENARIO}" \
 	-e VUS="${VUS:-200}" \
 	-e ITERATIONS="${ITERATIONS:-1000000}" \
+	-e JWT_SECRET="${JWT_SECRET:-local-dev-only-hs256-secret-32b!!}" \
 	--summary-export "${OUT}" \
 	"${ROOT}/load-test/claim.js"
 
 echo "k6 summary: ${OUT}"
 echo "ledger snapshot:"
-curl -sf "${BASE_URL}/api/v1/admin/sales/${SALE_ID}/stats" | python3 -m json.tool
+ADMIN_TOKEN="$(python3 "${ROOT}/load-test/issue_jwt.py" "${JWT_SECRET:-local-dev-only-hs256-secret-32b!!}" admin ADMIN)"
+curl -sf -H "Authorization: Bearer ${ADMIN_TOKEN}" \
+	"${BASE_URL}/api/v1/admin/sales/${SALE_ID}/stats" | python3 -m json.tool

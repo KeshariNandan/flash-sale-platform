@@ -16,8 +16,11 @@ Install k6: `brew install k6` (or drop the official macOS binary on `PATH`).
 | `full` (default) | 200 | 1,000,000 | The graded before/after run |
 
 Each full run uses the same sale shape: stock 1,000, one unit per buyer, a
-pre-seeded pool of 50,000 buyers (`lt-0` … `lt-49999`). Winners who come back
-get `409 duplicate-claim`; everyone else after stock is gone gets `409 sold-out`.
+pre-seeded pool of 50,000 buyers (`lt-0` … `lt-49999`) identified by HS256 JWTs
+(`load-test/issue_jwt.py` / k6 `setup`). Winners who come back get
+`409 duplicate-claim`; everyone else after stock is gone gets `409 sold-out`.
+Admin seed/stats calls send `role=ADMIN`. The measured 1M run disables the
+rate limiter so it stays comparable to the SQL baseline.
 
 Run twice on that shape:
 

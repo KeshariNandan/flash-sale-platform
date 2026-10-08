@@ -7,9 +7,9 @@ sells more units than it has.
 Built as the Applied Software Project (backend specialization) for the
 Scaler Neovarsity / Woolf M.Sc. in Computer Science.
 
-> Status: in progress (see commit history). Done: schema, domain, admin API,
-> claim path, SQL and Redis gates, outbox relay, Kafka order worker, simulated
-> payment, hold reconciler, k6 baseline 1M. Next: JWT, rate limiting, optimised 1M.
+> Status: seven-day build. Schema, domain, admin API, claim path, SQL and Redis
+> gates, outbox, Kafka worker, payment, reconciler, JWT resource server, Redis
+> rate limiter, k6 baseline and optimised 1M (see load-test/results).
 
 ## What the system guarantees
 
@@ -36,7 +36,7 @@ flowchart LR
 
 Claim flow for one unit:
 
-1. `POST /api/v1/sales/{saleId}/claims` with an `Idempotency-Key` header; buyer identity comes from the authenticated principal (`X-Buyer-Id` header until the JWT resource server lands), never from the body.
+1. `POST /api/v1/sales/{saleId}/claims` with an `Idempotency-Key` header and a Bearer JWT; the subject is the buyer id, never taken from the body. A Redis token bucket may answer 429 before the gate.
 2. `StockGate.tryReserve`: Redis Lua script (optimised) or conditional SQL `UPDATE` (baseline) decides accepted / sold-out / duplicate / replay.
 3. One short Postgres transaction: insert `PENDING` reservation + outbox row. Return `202` with `Location` (or `200` replay, `409` sold-out / duplicate-claim / sale-not-open).
 4. Outbox relay publishes `ReservationAccepted` to `sale.reservations`, keyed by reservation id.
@@ -58,17 +58,18 @@ and tests are identical for both.
 | GET | `/api/v1/admin/sales/{id}/stats` | Stock + reservation counts, oversell |
 | GET | `/api/v1/admin/sales/{id}/invariant` | `confirmed + pending + gate remaining == initial stock` |
 | POST | `/api/v1/admin/sales/{id}/reconcile` | Expire stale holds, then return the invariant |
-| POST | `/api/v1/sales/{id}/claims` | Claim one unit (`Idempotency-Key` header) |
+| POST | `/api/v1/sales/{id}/claims` | Claim one unit (`Authorization: Bearer`, `Idempotency-Key`) |
 | GET | `/api/v1/reservations/{id}` | Reservation status |
 
 Errors are RFC 9457 problem details with stable `type`s (`sold-out`,
-`duplicate-claim`, `sale-not-open`, `illegal-transition`, `validation-error`, ...).
+`duplicate-claim`, `sale-not-open`, `rate-limited`, `unauthenticated`,
+`illegal-transition`, `validation-error`, ...). Admin routes require `role=ADMIN`.
 
 ## Tech stack
 
-- Java 25, Spring Boot 4.0.2 (Web MVC, Data JPA, Data Redis, Kafka, Validation, Actuator)
+- Java 25, Spring Boot 4.0.2 (Web MVC, Security OAuth2 resource server, Data JPA, Data Redis, Kafka, Validation, Actuator)
 - PostgreSQL 16 (order ledger, transactional outbox), Flyway migrations
-- Redis 7 (atomic stock gate, holds)
+- Redis 7 (atomic stock gate, holds, rate-limit buckets)
 - Apache Kafka 3.9 in KRaft mode (async order pipeline)
 - JUnit 5 + Testcontainers for correctness tests, k6 for load tests
 - Docker Compose for local infrastructure

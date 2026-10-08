@@ -30,6 +30,9 @@ iso_plus_hours() {
 	python3 -c 'from datetime import datetime, timedelta, timezone; print((datetime.now(timezone.utc)+timedelta(hours=2)).strftime("%Y-%m-%dT%H:%M:%SZ"))'
 }
 
+JWT_SECRET="${JWT_SECRET:-local-dev-only-hs256-secret-32b!!}"
+ADMIN_TOKEN="$(python3 "${ROOT}/load-test/issue_jwt.py" "${JWT_SECRET}" admin ADMIN)"
+
 wait_for_app
 
 body=$(python3 - <<PY
@@ -48,9 +51,12 @@ PY
 )
 
 created="$(curl -sf -X POST "${BASE_URL}/api/v1/admin/sales" \
-	-H 'Content-Type: application/json' -d "${body}")"
+	-H 'Content-Type: application/json' \
+	-H "Authorization: Bearer ${ADMIN_TOKEN}" \
+	-d "${body}")"
 SALE_ID="$(python3 -c 'import json,sys; print(json.load(sys.stdin)["id"])' <<<"${created}")"
-curl -sf -X POST "${BASE_URL}/api/v1/admin/sales/${SALE_ID}/open" >/dev/null
+curl -sf -X POST "${BASE_URL}/api/v1/admin/sales/${SALE_ID}/open" \
+	-H "Authorization: Bearer ${ADMIN_TOKEN}" >/dev/null
 
 last=$((BUYER_POOL - 1))
 docker exec -i "${PG_CONTAINER}" psql -U flashsale -d flashsale -v ON_ERROR_STOP=1 <<SQL
