@@ -47,27 +47,25 @@ HEAD_PT = 14
 FILL_RE = re.compile(r"<[^<>]{3,80}>")
 
 TITLE_PLACEHOLDERS = {
-    "<Full Name of the Student>": "[TO FILL: Full Name of the Student]",
-    "<Month of Submission like June, 2024>": "[TO FILL: Month, Year of Submission]",
-    "<Registered Scaler Email ID>": "[TO FILL: Registered Scaler Email ID]",
-    "DD/MM/YYYY <Date of Submission>": "[TO FILL: DD/MM/YYYY]",
-    "< Project Module start date >": "[TO FILL: module start date]",
-    "< Module end date >": "[TO FILL: module end date]",
-    "<Full Name of the Candidate>": "[TO FILL: Full Name of the Candidate]",
-    "<Signature of the Candidate>": "[TO FILL: Signature]",
-    "XX Month 20XX": "[TO FILL: DD Month YYYY]",
+    "<Full Name of the Student>": "Keshari Nandan Prasad",
+    "<Month of Submission like June, 2024>": "OCTOBER, 2026",
+    "<Registered Scaler Email ID>": "kesharionemail@gmail.com",
+    "DD/MM/YYYY <Date of Submission>": "12/10/2026",
+    "< Project Module start date >": "10 Sep 2026",
+    "< Module end date >": "11 Oct 2026",
+    "<Full Name of the Candidate>": "Keshari Nandan Prasad",
+    "<Signature of the Candidate>": "Keshari Nandan Prasad",
+    "XX Month 20XX": "12 Oct 2026",
 }
 
 ACKNOWLEDGMENT = (
-    "I would like to thank my family for their patience and encouragement during the "
-    "months in which evenings and weekends were given to this programme. I am grateful to "
-    "my thesis supervisor, Naman Bhalla, for framing the capstone around real engineering "
-    "trade-offs rather than a checklist, and to the Scaler Neovarsity instructors and "
-    "teaching assistants whose classes on low-level design, databases, caching, messaging "
-    "and cloud deployment shaped the architecture presented here. I also thank my mentors "
-    "and peers in the cohort for the design reviews and the honest questions that improved "
-    "this work, and my colleagues at work whose production incidents taught me why the "
-    "invariants in this project matter. [TO FILL: add any specific names you wish to thank]"
+    "I am grateful first to my wife, Akanksha, who made room for the evenings and weekends "
+    "this degree asked of us, and to my mother, whose encouragement has followed every stage "
+    "of my education. I thank my thesis supervisor, Naman Bhalla, and the Scaler Neovarsity "
+    "instructors for a capstone that rewarded engineering trade-offs rather than a checklist. "
+    "The work itself was self-motivated: I wanted to show, with measurements rather than slogans, "
+    "that a flash sale can refuse oversell under a million attempts. That resolve, and Akanksha's "
+    "patience when the laptop stayed open late, carried this report to completion."
 )
 
 
@@ -475,7 +473,7 @@ def replace_placeholders(doc):
         for r in runs[1:]:
             r._r.getparent().remove(r._r)
         first.text = new
-        first.font.highlight_color = WD_COLOR_INDEX.YELLOW
+        first.font.highlight_color = None
         filled.append(new)
 
     for p in doc.paragraphs:
@@ -492,7 +490,8 @@ def replace_placeholders(doc):
 
 def fill_acknowledgment(doc):
     for p in doc.paragraphs:
-        if p.text.strip().startswith("[TO FILL: Insert a Paragraph within this Page"):
+        if p.text.strip().startswith("[TO FILL: Insert a Paragraph within this Page") or p.text.strip().startswith(
+                "<Insert a Paragraph within this Page"):
             for r in p.runs[1:]:
                 r._r.getparent().remove(r._r)
             p.runs[0].text = ACKNOWLEDGMENT

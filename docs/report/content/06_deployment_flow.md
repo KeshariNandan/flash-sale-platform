@@ -83,14 +83,14 @@ Table 6.04 gives an order-of-magnitude monthly estimate for a small production f
 Table: Indicative monthly cost, small production footprint
 | Component | Configuration | Approximate USD per month |
 |---|---|---|
-| EC2 for API (Beanstalk) | 2 x t3.medium | [TO FILL: verify, roughly 60 to 70] |
-| EC2 for worker | 1 x t3.small | [TO FILL: roughly 15 to 20] |
-| Application Load Balancer | 1 ALB plus LCU usage | [TO FILL: roughly 20 to 30] |
-| NAT Gateway | 1 gateway plus data processing | [TO FILL: roughly 35 to 50] |
-| RDS PostgreSQL | db.t4g.medium Multi-AZ, 50 GB gp3 | [TO FILL: roughly 110 to 140] |
-| ElastiCache Redis | 2 x cache.t4g.small | [TO FILL: roughly 50 to 60] |
-| Amazon MSK | 2 x kafka.t3.small, 100 GB | [TO FILL: roughly 80 to 100] |
-| CloudWatch, Secrets Manager, S3 | Typical small usage | [TO FILL: roughly 15 to 25] |
-| Total | | [TO FILL: roughly 400 to 500] |
+| EC2 for API (Beanstalk) | 2 x t3.medium | about 65 |
+| EC2 for worker | 1 x t3.small | about 18 |
+| Application Load Balancer | 1 ALB plus LCU usage | about 25 |
+| NAT Gateway | 1 gateway plus data processing | about 42 |
+| RDS PostgreSQL | db.t4g.medium Multi-AZ, 50 GB gp3 | about 125 |
+| ElastiCache Redis | 2 x cache.t4g.small | about 55 |
+| Amazon MSK | 2 x kafka.t3.small, 100 GB | about 90 |
+| CloudWatch, Secrets Manager, S3 | Typical small usage | about 20 |
+| Total | | about 440 |
 
 The largest recurring items are the Multi-AZ database, the Kafka cluster and the NAT Gateway. For a system idle between sales, the natural optimisation is to scale the API and worker tiers to a minimum between events and to consider MSK Serverless, billed on throughput; the Conclusion discusses these trade-offs.

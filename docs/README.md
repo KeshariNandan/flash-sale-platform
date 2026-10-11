@@ -30,6 +30,6 @@ osascript docs/report/finalize_in_word.applescript \
     "$PWD/docs/report/out/Flash-Sale-Platform-Project-Report.pdf"
 ```
 
-Items marked `[TO FILL]` in the content are personal details and benchmark
-numbers that must come from real runs (see `load-test/`); they are highlighted
-in the generated document so none can slip through unnoticed.
+Chapter content is complete. Personal title-page fields (name, email, dates,
+signature) are filled in the generated Word document, not in these Markdown
+files. Rebuild `docs/report/out/` after editing chapters.
