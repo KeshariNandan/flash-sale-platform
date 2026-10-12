@@ -35,9 +35,10 @@ build/
 ### macOS
 .DS_Store
 
-### Report tooling (generated .docx/.pdf are build outputs, submitted via the portal)
+### Report tooling
 .venv/
-docs/report/out/
+# Word lock files while the report is open
+docs/report/out/~$*
 
 ### Load-test artefacts (summaries in *.md are committed; raw dumps are not)
 load-test/results/*.json

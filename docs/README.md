@@ -14,7 +14,7 @@ report/
 ├── diagrams/*.mmd                 # Mermaid sources; render.sh -> *.png
 ├── build_report.py                # template + content -> out/*.docx
 ├── finalize_in_word.applescript   # Word: update TOC/fields, export PDF
-└── out/                           # generated .docx / .pdf (git-ignored)
+└── out/                           # generated .docx / .pdf (committed)
 ```
 
 Build:
@@ -30,6 +30,5 @@ osascript docs/report/finalize_in_word.applescript \
     "$PWD/docs/report/out/Flash-Sale-Platform-Project-Report.pdf"
 ```
 
-Chapter content is complete. Personal title-page fields (name, email, dates,
-signature) are filled in the generated Word document, not in these Markdown
-files. Rebuild `docs/report/out/` after editing chapters.
+Chapter content is complete. Title-page fields are in `build_report.py`.
+The generated Word and PDF copies live in `docs/report/out/`.
